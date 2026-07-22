@@ -77,9 +77,19 @@ export default function FormGenerator() {
   const formattedCounter = String(counter).padStart(3, '0');
   const controlNo = `${prefix.trim().toUpperCase()}-${office}-${formattedCounter}`;
 
+  const normalizeAgeValue = (value) => {
+    if (value === null || value === undefined) return '';
+    const text = String(value).trim();
+    const digitsOnly = text.replace(/\D/g, '');
+    return digitsOnly;
+  };
+
   const getAgeGroup = (numAge) => {
-    const parsedAge = parseInt(numAge, 10);
-    if (isNaN(parsedAge)) return 'Not Stated';
+    const normalizedAge = normalizeAgeValue(numAge);
+    if (!normalizedAge) return 'Not Stated';
+
+    const parsedAge = parseInt(normalizedAge, 10);
+    if (Number.isNaN(parsedAge)) return 'Not Stated';
     if (parsedAge <= 18) return '18 and below';
     if (parsedAge <= 24) return '19-24 years old';
     if (parsedAge <= 39) return '25-39 years old';
@@ -204,9 +214,10 @@ export default function FormGenerator() {
                 className="form-control"
                 min="0"
                 max="120"
+                inputMode="numeric"
                 placeholder="Enter age"
                 value={age}
-                onChange={(e) => setAge(e.target.value)}
+                onChange={(e) => setAge(normalizeAgeValue(e.target.value))}
               />
             </div>
             <div className="col-md-8">
@@ -216,7 +227,7 @@ export default function FormGenerator() {
                 min="0"
                 max="120"
                 value={age || 0}
-                onChange={(e) => setAge(e.target.value)}
+                onChange={(e) => setAge(normalizeAgeValue(e.target.value))}
               />
               <small className="text-muted">Slide to select age (0-120)</small>
             </div>
