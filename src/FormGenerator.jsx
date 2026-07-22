@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Modal } from 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 export default function FormGenerator() {
   const [prefix, setPrefix] = useState('NSO');
@@ -119,8 +119,8 @@ export default function FormGenerator() {
     if (frame) frame.src = url;
 
     const modalElement = document.getElementById('googleFormModal');
-    if (modalElement && window.bootstrap) {
-      const modal = new window.bootstrap.Modal(modalElement);
+    if (modalElement) {
+      const modal = new Modal(modalElement);
 
       modalElement.addEventListener('hidden.bs.modal', () => {
         setCounter((prev) => {
