@@ -36,8 +36,20 @@ export default function FormGenerator() {
     { value: 'Others', label: 'Others', shortcut: '0' },
   ];
 
-  const persistCounter = (officeCode, value) => {
-    localStorage.setItem(`NSO_COUNTER_${officeCode}`, String(value));
+  const persistCounter = async (officeCode, value) => {
+    try {
+      const response = await fetch('/api/counter/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ office: officeCode, counter: value }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to save counter on server.');
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   useEffect(() => {
@@ -57,14 +69,21 @@ export default function FormGenerator() {
   }, [formDate]);
 
   useEffect(() => {
-    const key = `NSO_COUNTER_${office}`;
-    const savedCounter = localStorage.getItem(key);
-    if (savedCounter !== null) {
-      setCounter(parseInt(savedCounter, 10));
-    } else {
-      setCounter(1);
-      persistCounter(office, 1);
-    }
+    const loadCounter = async () => {
+      try {
+        const response = await fetch(`/api/counter/load?office=${encodeURIComponent(office)}`);
+        if (!response.ok) {
+          throw new Error('Unable to load counter from server.');
+        }
+        const data = await response.json();
+        setCounter(Number(data.counter) || 1);
+      } catch (error) {
+        setCounter(1);
+        persistCounter(office, 1);
+      }
+    };
+
+    loadCounter();
   }, [office]);
 
   useEffect(() => {
@@ -133,10 +152,10 @@ export default function FormGenerator() {
     return '60 and above';
   };
 
-  const handleCounterChange = (value) => {
+  const handleCounterChange = async (value) => {
     const nextValue = parseInt(value, 10) || 0;
     setCounter(nextValue);
-    persistCounter(office, nextValue);
+    await persistCounter(office, nextValue);
   };
 
   const handleLogin = (event) => {

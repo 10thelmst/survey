@@ -4,12 +4,68 @@ const path = require('path');
 
 const port = process.env.PORT || 3001;
 const csvDir = path.join(__dirname, 'server-data');
+const counterFile = path.join(csvDir, 'counters.json');
 
 if (!fs.existsSync(csvDir)) {
   fs.mkdirSync(csvDir, { recursive: true });
 }
 
+if (!fs.existsSync(counterFile)) {
+  fs.writeFileSync(counterFile, '{}', 'utf8');
+}
+
+const readCounters = () => {
+  try {
+    const raw = fs.readFileSync(counterFile, 'utf8');
+    return JSON.parse(raw || '{}');
+  } catch (error) {
+    return {};
+  }
+};
+
+const writeCounters = (data) => {
+  fs.writeFileSync(counterFile, JSON.stringify(data, null, 2), 'utf8');
+};
+
 const server = http.createServer((req, res) => {
+  if (req.method === 'GET' && req.url.startsWith('/api/counter/load')) {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const office = url.searchParams.get('office') || '06';
+    const counters = readCounters();
+    const counter = counters[office] || 1;
+
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ counter }));
+    return;
+  }
+
+  if (req.method === 'POST' && req.url === '/api/counter/save') {
+    let body = '';
+
+    req.on('data', (chunk) => {
+      body += chunk.toString();
+    });
+
+    req.on('end', () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const office = payload.office || '06';
+        const counter = Number(payload.counter) || 1;
+        const counters = readCounters();
+        counters[office] = counter;
+        writeCounters(counters);
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: 'Unable to save counter.' }));
+      }
+    });
+
+    return;
+  }
+
   if (req.method === 'POST' && req.url === '/api/counter/export') {
     let body = '';
 
