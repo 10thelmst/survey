@@ -12,6 +12,60 @@ export default function FormGenerator() {
   const [service, setService] = useState(
     'Scholarship- Education for Development Scholarship Program (EDSP)'
   );
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [saveStatus, setSaveStatus] = useState('');
+  const [verifierData, setVerifierData] = useState({ username: '', password: '' });
+
+  const serviceOptions = [
+    { value: 'Scholarship- Education for Development Scholarship Program (EDSP)', label: 'Scholarship - Education for Development Scholarship Program (EDSP)', shortcut: '1' },
+    { value: 'Repatriation- Transportation Assistance/Financial Assistance', label: 'Repatriation - Transportation Assistance / Financial Assistance', shortcut: '2' },
+    { value: 'Scholarship- OFW Dependants Scholarship Program (ODSP)', label: 'Scholarship - OFW Dependants Scholarship Program (ODSP)', shortcut: '3' },
+    { value: 'Livelihood Assistance- Balik Pinas, Balik Hanapbuhay (BPBH)', label: 'Livelihood Assistance - Balik Pinas, Balik Hanapbuhay (BPBH)', shortcut: '4' },
+    { value: 'Membership Promotion/Processing/Collection', label: 'Membership Promotion / Processing / Collection', shortcut: '5' },
+    { value: 'Welfare Assistance Program (WAP)', label: 'Welfare Assistance Program (WAP)', shortcut: '6' },
+    { value: 'Skills for Employment Scholarship (SESP)', label: 'Skills for Employment Scholarship (SESP)', shortcut: 'S' },
+    { value: 'Education and Livelihood Assistance Program (ELAP)', label: 'Education and Livelihood Assistance Program (ELAP)', shortcut: 'E' },
+    { value: 'Pre-Departure Orientation Seminar (PDOS)', label: 'Pre-Departure Orientation Seminar (PDOS)', shortcut: 'P' },
+    { value: 'Legal Assistance- Single Entry Approach Process (SENA)', label: 'Legal Assistance - Single Entry Approach Process (SENA)', shortcut: 'L' },
+    { value: 'REBATE Program', label: 'REBATE Program', shortcut: 'R' },
+    { value: 'Seafarers Upgraded Program (SUP)', label: 'Seafarers Upgraded Program (SUP)', shortcut: 'U' },
+    { value: 'Cash Releasing/Check Releasing', label: 'Cash Releasing / Check Releasing', shortcut: 'C' },
+    { value: 'Freedom of Information (FOI) Inquiries', label: 'Freedom of Information (FOI) Inquiries', shortcut: 'I' },
+    { value: 'Others', label: 'Others', shortcut: '0' },
+  ];
+
+  const persistCounter = (officeCode, value) => {
+    localStorage.setItem(`NSO_COUNTER_${officeCode}`, String(value));
+  };
+
+  useEffect(() => {
+    const savedAuth = sessionStorage.getItem('ccss-auth');
+    if (savedAuth === 'true') {
+      setIsAuthenticated(true);
+    }
+
+    fetch('/verifier.txt')
+      .then((response) => (response.ok ? response.text() : ''))
+      .then((text) => {
+        const values = {};
+        text.split(/\r?\n/).forEach((line) => {
+          const [key, ...rest] = line.split('=');
+          if (key && rest.length) {
+            values[key.trim()] = rest.join('=').trim();
+          }
+        });
+        setVerifierData({
+          username: values.username || '',
+          password: values.password || '',
+        });
+      })
+      .catch(() => {
+        setVerifierData({ username: '', password: '' });
+      });
+  }, []);
 
   useEffect(() => {
     if (formDate) {
@@ -29,7 +83,7 @@ export default function FormGenerator() {
       setCounter(parseInt(savedCounter, 10));
     } else {
       setCounter(1);
-      localStorage.setItem(key, '1');
+      persistCounter(office, 1);
     }
   }, [office]);
 
@@ -49,24 +103,26 @@ export default function FormGenerator() {
       if (key === 'm') setGender('Male');
       if (key === 'f') setGender('Female');
 
-      const servicesList = [
-        'Scholarship- Education for Development Scholarship Program (EDSP)',
-        'Repatriation- Transportation Assistance/Financial Assistance',
-        'Scholarship- OFW Dependants Scholarship Program (ODSP)',
-        'Livelihood Assistance- Balik Pinas, Balik Hanapbuhay (BPBH)',
-        'Membership Promotion/Processing/Collection',
-        'Welfare Assistance Program (WAP)',
-        'REBATE Program',
-        'Seafarers Upgraded Program (SUP)',
-        'Cash Releasing/Check Releasing',
-        'Others',
-      ];
+      const serviceShortcutMap = {
+        1: serviceOptions[0].value,
+        2: serviceOptions[1].value,
+        3: serviceOptions[2].value,
+        4: serviceOptions[3].value,
+        5: serviceOptions[4].value,
+        6: serviceOptions[5].value,
+        s: serviceOptions[6].value,
+        e: serviceOptions[7].value,
+        p: serviceOptions[8].value,
+        l: serviceOptions[9].value,
+        r: serviceOptions[10].value,
+        u: serviceOptions[11].value,
+        c: serviceOptions[12].value,
+        i: serviceOptions[13].value,
+        0: serviceOptions[14].value,
+      };
 
-      if (key >= '0' && key <= '9') {
-        const index = key === '0' ? 9 : parseInt(key, 10) - 1;
-        if (servicesList[index]) {
-          setService(servicesList[index]);
-        }
+      if (key in serviceShortcutMap) {
+        setService(serviceShortcutMap[key]);
       }
     };
 
@@ -95,6 +151,61 @@ export default function FormGenerator() {
     if (parsedAge <= 39) return '25-39 years old';
     if (parsedAge <= 59) return '40-59 years old';
     return '60 and above';
+  };
+
+  const handleCounterChange = (value) => {
+    const nextValue = parseInt(value, 10) || 0;
+    setCounter(nextValue);
+    persistCounter(office, nextValue);
+  };
+
+  const handleLogin = (event) => {
+    event.preventDefault();
+    if (!verifierData.username || !verifierData.password) {
+      setLoginError('The verifier file is not ready yet.');
+      return;
+    }
+
+    if (loginUsername === verifierData.username && loginPassword === verifierData.password) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem('ccss-auth', 'true');
+      setLoginError('');
+    } else {
+      setLoginError('Invalid username or password.');
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('ccss-auth');
+    setLoginPassword('');
+    setLoginError('');
+  };
+
+  const handleExportCsv = async () => {
+    setSaveStatus('Saving to server...');
+
+    try {
+      const response = await fetch('/api/counter/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          date: formDate,
+          office,
+          counter,
+          prefix: prefix.trim().toUpperCase(),
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || 'Unable to save the CSV file.');
+      }
+
+      setSaveStatus(`Saved on server as ${result.file}`);
+    } catch (error) {
+      setSaveStatus(error.message || 'Unable to save the CSV file.');
+    }
   };
 
   const handleOpenForm = () => {
@@ -135,7 +246,7 @@ export default function FormGenerator() {
       modalElement.addEventListener('hidden.bs.modal', () => {
         setCounter((prev) => {
           const nextVal = prev + 1;
-          localStorage.setItem(`NSO_COUNTER_${office}`, nextVal);
+          persistCounter(office, nextVal);
           return nextVal;
         });
       }, { once: true });
@@ -143,6 +254,53 @@ export default function FormGenerator() {
       modal.show();
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", fontSize: '16px' }}>
+        <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
+          <div className="container">
+            <a className="navbar-brand fw-bold" href="#!">CCSS System</a>
+          </div>
+        </nav>
+
+        <div className="container mt-5">
+          <div className="row justify-content-center">
+            <div className="col-md-5">
+              <div className="card shadow-sm">
+                <div className="card-body">
+                  <h3 className="card-title fw-bold mb-3">Login Required</h3>
+                  <p className="text-muted">Credentials are verified from the text verifier file.</p>
+                  <form onSubmit={handleLogin}>
+                    <div className="mb-3">
+                      <label className="form-label fw-bold">Username</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={loginUsername}
+                        onChange={(e) => setLoginUsername(e.target.value)}
+                      />
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label fw-bold">Password</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                      />
+                    </div>
+                    {loginError ? <div className="alert alert-danger py-2">{loginError}</div> : null}
+                    <button className="btn btn-primary w-100" type="submit">Login</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", fontSize: '16px' }}>
@@ -195,7 +353,7 @@ export default function FormGenerator() {
               type="number"
               className="form-control"
               value={counter}
-              onChange={(e) => setCounter(parseInt(e.target.value, 10) || 0)}
+              onChange={(e) => handleCounterChange(e.target.value)}
             />
           </div>
         </div>
@@ -204,6 +362,16 @@ export default function FormGenerator() {
           <strong>Control Number: </strong>
           <span>{controlNo}</span>
         </div>
+
+        <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
+          <button className="btn btn-outline-secondary btn-sm" onClick={handleExportCsv}>
+            Save Counter CSV
+          </button>
+          <button className="btn btn-outline-danger btn-sm" onClick={handleLogout}>
+            Logout
+          </button>
+        </div>
+        {saveStatus ? <div className="alert alert-info py-2 mb-4">{saveStatus}</div> : null}
 
         <div className="mt-3">
           <label className="form-label fw-bold">Age</label>
@@ -262,35 +430,24 @@ export default function FormGenerator() {
 
           <div className="col-md-6">
             <label className="form-label fw-bold">
-              Service Availed <span className="fst-italic text-muted fw-normal fs-6">(Press 1-0)</span>
+              Service Availed <span className="fst-italic text-muted fw-normal fs-6">(Press 1-0 or S, E, P, L, R, U, C, I)</span>
             </label>
-            {[
-              { num: '1', val: 'Scholarship- Education for Development Scholarship Program (EDSP)', label: 'Scholarship - Education for Development Scholarship Program (EDSP)' },
-              { num: '2', val: 'Repatriation- Transportation Assistance/Financial Assistance', label: 'Repatriation - Transportation Assistance / Financial Assistance' },
-              { num: '3', val: 'Scholarship- OFW Dependants Scholarship Program (ODSP)', label: 'Scholarship - OFW Dependants Scholarship Program (ODSP)' },
-              { num: '4', val: 'Livelihood Assistance- Balik Pinas, Balik Hanapbuhay (BPBH)', label: 'Livelihood Assistance - Balik Pinas, Balik Hanapbuhay (BPBH)' },
-              { num: '5', val: 'Membership Promotion/Processing/Collection', label: 'Membership Promotion / Processing / Collection' },
-              { num: '6', val: 'Welfare Assistance Program (WAP)', label: 'Welfare Assistance Program (WAP)' },
-              { num: '7', val: 'REBATE Program', label: 'REBATE Program' },
-              { num: '8', val: 'Seafarers Upgraded Program (SUP)', label: 'Seafarers Upgraded Program (SUP)' },
-              { num: '9', val: 'Cash Releasing/Check Releasing', label: 'Cash Releasing / Check Releasing' },
-              { num: '0', val: 'Others', label: 'Others' },
-            ].map((s) => (
-              <div className="form-check" key={s.num}>
+            {serviceOptions.map((option) => (
+              <div className="form-check" key={option.value}>
                 <input
                   className="form-check-input"
                   type="radio"
                   name="service"
-                  id={`service-${s.num}`}
-                  value={s.val}
-                  checked={service === s.val}
-                  onChange={() => setService(s.val)}
+                  id={`service-${option.shortcut}`}
+                  value={option.value}
+                  checked={service === option.value}
+                  onChange={() => setService(option.value)}
                 />
-                <label className="form-check-label" htmlFor={`service-${s.num}`}>
+                <label className="form-check-label" htmlFor={`service-${option.shortcut}`}>
                   <span className="bg-warning-subtle text-decoration-underline fw-bold px-1 rounded">
-                    {s.num}
+                    {option.shortcut}
                   </span>
-                  . {s.label}
+                  . {option.label}
                 </label>
               </div>
             ))}

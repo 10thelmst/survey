@@ -13,6 +13,24 @@ export default function FormGenerator() {
     'Scholarship- Education for Development Scholarship Program (EDSP)'
   );
 
+  const serviceOptions = [
+    { value: 'Scholarship- Education for Development Scholarship Program (EDSP)', label: 'Scholarship - Education for Development Scholarship Program (EDSP)', shortcut: '1' },
+    { value: 'Repatriation- Transportation Assistance/Financial Assistance', label: 'Repatriation - Transportation Assistance / Financial Assistance', shortcut: '2' },
+    { value: 'Scholarship- OFW Dependants Scholarship Program (ODSP)', label: 'Scholarship - OFW Dependants Scholarship Program (ODSP)', shortcut: '3' },
+    { value: 'Livelihood Assistance- Balik Pinas, Balik Hanapbuhay (BPBH)', label: 'Livelihood Assistance - Balik Pinas, Balik Hanapbuhay (BPBH)', shortcut: '4' },
+    { value: 'Membership Promotion/Processing/Collection', label: 'Membership Promotion / Processing / Collection', shortcut: '5' },
+    { value: 'Welfare Assistance Program (WAP)', label: 'Welfare Assistance Program (WAP)', shortcut: '6' },
+    { value: 'Skills for Employment Scholarship (SESP)', label: 'Skills for Employment Scholarship (SESP)', shortcut: 'S' },
+    { value: 'Education and Livelihood Assistance Program (ELAP)', label: 'Education and Livelihood Assistance Program (ELAP)', shortcut: 'E' },
+    { value: 'Pre-Departure Orientation Seminar (PDOS)', label: 'Pre-Departure Orientation Seminar (PDOS)', shortcut: 'P' },
+    { value: 'Legal Assistance- Single Entry Approach Process (SENA)', label: 'Legal Assistance - Single Entry Approach Process (SENA)', shortcut: 'L' },
+    { value: 'REBATE Program', label: 'REBATE Program', shortcut: 'R' },
+    { value: 'Seafarers Upgraded Program (SUP)', label: 'Seafarers Upgraded Program (SUP)', shortcut: 'U' },
+    { value: 'Cash Releasing/Check Releasing', label: 'Cash Releasing / Check Releasing', shortcut: 'C' },
+    { value: 'Freedom of Information (FOI) Inquiries', label: 'Freedom of Information (FOI) Inquiries', shortcut: 'I' },
+    { value: 'Others', label: 'Others', shortcut: '0' },
+  ];
+
   // Sync office with date change
   useEffect(() => {
     if (formDate) {
@@ -52,24 +70,26 @@ export default function FormGenerator() {
       if (key === 'm') setGender('Male');
       if (key === 'f') setGender('Female');
 
-      const servicesList = [
-        'Scholarship- Education for Development Scholarship Program (EDSP)',
-        'Repatriation- Transportation Assistance/Financial Assistance',
-        'Scholarship- OFW Dependants Scholarship Program (ODSP)',
-        'Livelihood Assistance- Balik Pinas, Balik Hanapbuhay (BPBH)',
-        'Membership Promotion/Processing/Collection',
-        'Welfare Assistance Program (WAP)',
-        'REBATE Program',
-        'Seafarers Upgraded Program (SUP)',
-        'Cash Releasing/Check Releasing',
-        'Others',
-      ];
+      const serviceShortcutMap = {
+        1: serviceOptions[0].value,
+        2: serviceOptions[1].value,
+        3: serviceOptions[2].value,
+        4: serviceOptions[3].value,
+        5: serviceOptions[4].value,
+        6: serviceOptions[5].value,
+        s: serviceOptions[6].value,
+        e: serviceOptions[7].value,
+        p: serviceOptions[8].value,
+        l: serviceOptions[9].value,
+        r: serviceOptions[10].value,
+        u: serviceOptions[11].value,
+        c: serviceOptions[12].value,
+        i: serviceOptions[13].value,
+        0: serviceOptions[14].value,
+      };
 
-      if (key >= '0' && key <= '9') {
-        const index = key === '0' ? 9 : parseInt(key, 10) - 1;
-        if (servicesList[index]) {
-          setService(servicesList[index]);
-        }
+      if (key in serviceShortcutMap) {
+        setService(serviceShortcutMap[key]);
       }
     };
 
@@ -264,35 +284,24 @@ export default function FormGenerator() {
 
           <div className="col-md-6">
             <label className="form-label fw-bold">
-              Service Availed <span className="fst-italic text-muted fw-normal fs-6">(Press 1-0)</span>
+              Service Availed <span className="fst-italic text-muted fw-normal fs-6">(Press 1-0 or S, E, P, L, R, U, C, I)</span>
             </label>
-            {[
-              { num: '1', val: 'Scholarship- Education for Development Scholarship Program (EDSP)', label: 'Scholarship - Education for Development Scholarship Program (EDSP)' },
-              { num: '2', val: 'Repatriation- Transportation Assistance/Financial Assistance', label: 'Repatriation - Transportation Assistance / Financial Assistance' },
-              { num: '3', val: 'Scholarship- OFW Dependants Scholarship Program (ODSP)', label: 'Scholarship - OFW Dependants Scholarship Program (ODSP)' },
-              { num: '4', val: 'Livelihood Assistance- Balik Pinas, Balik Hanapbuhay (BPBH)', label: 'Livelihood Assistance - Balik Pinas, Balik Hanapbuhay (BPBH)' },
-              { num: '5', val: 'Membership Promotion/Processing/Collection', label: 'Membership Promotion / Processing / Collection' },
-              { num: '6', val: 'Welfare Assistance Program (WAP)', label: 'Welfare Assistance Program (WAP)' },
-              { num: '7', val: 'REBATE Program', label: 'REBATE Program' },
-              { num: '8', val: 'Seafarers Upgraded Program (SUP)', label: 'Seafarers Upgraded Program (SUP)' },
-              { num: '9', val: 'Cash Releasing/Check Releasing', label: 'Cash Releasing / Check Releasing' },
-              { num: '0', val: 'Others', label: 'Others' },
-            ].map((s) => (
-              <div className="form-check" key={s.num}>
+            {serviceOptions.map((option) => (
+              <div className="form-check" key={option.value}>
                 <input
                   className="form-check-input"
                   type="radio"
                   name="service"
-                  id={`service-${s.num}`}
-                  value={s.val}
-                  checked={service === s.val}
-                  onChange={() => setService(s.val)}
+                  id={`service-${option.shortcut}`}
+                  value={option.value}
+                  checked={service === option.value}
+                  onChange={() => setService(option.value)}
                 />
-                <label className="form-check-label" htmlFor={`service-${s.num}`}>
+                <label className="form-check-label" htmlFor={`service-${option.shortcut}`}>
                   <span className="bg-warning-subtle text-decoration-underline fw-bold px-1 rounded">
-                    {s.num}
+                    {option.shortcut}
                   </span>
-                  . {s.label}
+                  . {option.label}
                 </label>
               </div>
             ))}
