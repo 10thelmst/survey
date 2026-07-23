@@ -16,7 +16,6 @@ export default function FormGenerator() {
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [saveStatus, setSaveStatus] = useState('');
 
   const serviceOptions = [
     { value: 'Scholarship- Education for Development Scholarship Program (EDSP)', label: 'Scholarship - Education for Development Scholarship Program (EDSP)', shortcut: '1' },
@@ -135,7 +134,7 @@ export default function FormGenerator() {
   const normalizeAgeValue = (value) => {
     if (value === null || value === undefined) return '';
     const text = String(value).trim();
-    const digitsOnly = text.replace(/\D/g, '');
+    const digitsOnly = text.replace(/[^0-9]/g, '');
     return digitsOnly;
   };
 
@@ -177,32 +176,6 @@ export default function FormGenerator() {
     sessionStorage.removeItem('ccss-auth');
     setLoginPassword('');
     setLoginError('');
-  };
-
-  const handleExportCsv = async () => {
-    setSaveStatus('Saving to server...');
-
-    try {
-      const response = await fetch('/api/counter/export', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: formDate,
-          office,
-          counter,
-          prefix: prefix.trim().toUpperCase(),
-        }),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || 'Unable to save the CSV file.');
-      }
-
-      setSaveStatus(`Saved on server as ${result.file}`);
-    } catch (error) {
-      setSaveStatus(error.message || 'Unable to save the CSV file.');
-    }
   };
 
   const handleOpenForm = () => {
@@ -302,8 +275,11 @@ export default function FormGenerator() {
   return (
     <div style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", fontSize: '16px' }}>
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div className="container">
+        <div className="container d-flex justify-content-between align-items-center">
           <a className="navbar-brand fw-bold" href="#!">CCSS System</a>
+          <button className="btn btn-outline-light btn-sm" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </nav>
 
@@ -360,25 +336,13 @@ export default function FormGenerator() {
           <span>{controlNo}</span>
         </div>
 
-        <div className="d-flex flex-wrap align-items-center gap-2 mb-4">
-          <button className="btn btn-outline-secondary btn-sm" onClick={handleExportCsv}>
-            Save Counter CSV
-          </button>
-          <button className="btn btn-outline-danger btn-sm" onClick={handleLogout}>
-            Logout
-          </button>
-        </div>
-        {saveStatus ? <div className="alert alert-info py-2 mb-4">{saveStatus}</div> : null}
-
         <div className="mt-3">
           <label className="form-label fw-bold">Age</label>
           <div className="row">
             <div className="col-md-4">
               <input
-                type="number"
+                type="text"
                 className="form-control"
-                min="0"
-                max="120"
                 inputMode="numeric"
                 placeholder="Enter age"
                 value={age}
