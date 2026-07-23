@@ -17,7 +17,6 @@ export default function FormGenerator() {
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
-  const [verifierData, setVerifierData] = useState({ username: '', password: '' });
 
   const serviceOptions = [
     { value: 'Scholarship- Education for Development Scholarship Program (EDSP)', label: 'Scholarship - Education for Development Scholarship Program (EDSP)', shortcut: '1' },
@@ -46,25 +45,6 @@ export default function FormGenerator() {
     if (savedAuth === 'true') {
       setIsAuthenticated(true);
     }
-
-    fetch('/verifier.txt')
-      .then((response) => (response.ok ? response.text() : ''))
-      .then((text) => {
-        const values = {};
-        text.split(/\r?\n/).forEach((line) => {
-          const [key, ...rest] = line.split('=');
-          if (key && rest.length) {
-            values[key.trim()] = rest.join('=').trim();
-          }
-        });
-        setVerifierData({
-          username: values.username || '',
-          password: values.password || '',
-        });
-      })
-      .catch(() => {
-        setVerifierData({ username: '', password: '' });
-      });
   }, []);
 
   useEffect(() => {
@@ -161,12 +141,10 @@ export default function FormGenerator() {
 
   const handleLogin = (event) => {
     event.preventDefault();
-    if (!verifierData.username || !verifierData.password) {
-      setLoginError('The verifier file is not ready yet.');
-      return;
-    }
+    const expectedUsername = 'encoder';
+    const expectedPassword = 'OWWA3141592654!';
 
-    if (loginUsername === verifierData.username && loginPassword === verifierData.password) {
+    if (loginUsername === expectedUsername && loginPassword === expectedPassword) {
       setIsAuthenticated(true);
       sessionStorage.setItem('ccss-auth', 'true');
       setLoginError('');
