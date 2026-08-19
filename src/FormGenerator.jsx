@@ -240,18 +240,14 @@ export default function FormGenerator() {
   }, [age, controlNo, formDate, gender, handleOpenForm, isAuthenticated, office, service]);
 
   useEffect(() => {
-    const handleCloseFormShortcut = (event) => {
-      const modalElement = document.getElementById('googleFormModal');
-      const isModalVisible = modalElement?.classList.contains('show');
-
-      if (isAuthenticated && isModalVisible && event.code === 'Escape') {
-        event.preventDefault();
-        Modal.getInstance(modalElement)?.hide();
+    const handleEscape = (event) => {
+      if (isAuthenticated && event.key === 'Escape') {
+        document.querySelector('#googleFormModal .btn-close')?.click();
       }
     };
 
-    window.addEventListener('keydown', handleCloseFormShortcut);
-    return () => window.removeEventListener('keydown', handleCloseFormShortcut);
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
   }, [isAuthenticated]);
 
   if (!isAuthenticated) {
