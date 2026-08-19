@@ -239,6 +239,21 @@ export default function FormGenerator() {
     return () => window.removeEventListener('keydown', handleOpenFormShortcut);
   }, [age, controlNo, formDate, gender, handleOpenForm, isAuthenticated, office, service]);
 
+  useEffect(() => {
+    const handleCloseFormShortcut = (event) => {
+      const modalElement = document.getElementById('googleFormModal');
+      const isModalVisible = modalElement?.classList.contains('show');
+
+      if (isAuthenticated && isModalVisible && event.code === 'Escape') {
+        event.preventDefault();
+        Modal.getInstance(modalElement)?.hide();
+      }
+    };
+
+    window.addEventListener('keydown', handleCloseFormShortcut);
+    return () => window.removeEventListener('keydown', handleCloseFormShortcut);
+  }, [isAuthenticated]);
+
   if (!isAuthenticated) {
     return (
       <div style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", fontSize: '16px' }}>
@@ -440,7 +455,7 @@ export default function FormGenerator() {
         <div className="modal-dialog modal-xl modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title fw-bold">Customer Satisfaction Form</h5>
+              <h5 className="modal-title fw-bold">Customer Satisfaction Form <span className="fw-normal text-muted fs-6">(Press Esc to close)</span></h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div className="modal-body p-0">
