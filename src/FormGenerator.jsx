@@ -146,7 +146,7 @@ export default function FormGenerator() {
     if (Number.isNaN(parsedAge)) return 'Not Stated';
     if (parsedAge <= 18) return '18 and below';
     if (parsedAge <= 24) return '19-24 years old';
-    if (parsedAge <= 39) return '25-39 years old';
+    if (parsedAge <= 39) return '25-39 years  old';
     if (parsedAge <= 59) return '40-59 years old';
     return '60 and above';
   };
@@ -160,7 +160,7 @@ export default function FormGenerator() {
   const handleLogin = (event) => {
     event.preventDefault();
     const expectedUsername = 'encoder';
-    const expectedPassword = 'OWWA3141592654!';
+    const expectedPassword = 'OWWANAGA!';
 
     if (loginUsername === expectedUsername && loginPassword === expectedPassword) {
       setIsAuthenticated(true);
