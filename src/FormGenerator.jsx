@@ -225,6 +225,20 @@ export default function FormGenerator() {
     }
   };
 
+  useEffect(() => {
+    const handleOpenFormShortcut = (event) => {
+      const isEnterShortcut = event.code === 'Enter' && (event.altKey || event.ctrlKey);
+
+      if (isAuthenticated && isEnterShortcut) {
+        event.preventDefault();
+        handleOpenForm();
+      }
+    };
+
+    window.addEventListener('keydown', handleOpenFormShortcut);
+    return () => window.removeEventListener('keydown', handleOpenFormShortcut);
+  }, [age, controlNo, formDate, gender, handleOpenForm, isAuthenticated, office, service]);
+
   if (!isAuthenticated) {
     return (
       <div style={{ fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", fontSize: '16px' }}>
@@ -417,7 +431,7 @@ export default function FormGenerator() {
 
         <div className="mt-4 mb-5">
           <button className="btn btn-success btn-lg w-100 fw-semibold" onClick={handleOpenForm}>
-            Open Google Form
+            Open Google Form <span className="fw-normal">(Alt+Enter or Ctrl+Enter)</span>
           </button>
         </div>
       </div>
