@@ -457,6 +457,11 @@ export default function FormGenerator() {
             <div className="modal-body p-0">
               <iframe id="googleFrame" width="100%" height="700" style={{ border: 0 }} title="Google Form"></iframe>
             </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
+                Close Form
+              </button>
+            </div>
           </div>
         </div>
       </div>
