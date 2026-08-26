@@ -32,6 +32,7 @@ export default function FormGenerator() {
     { value: 'Seafarers Upgraded Program (SUP)', label: 'Seafarers Upgraded Program (SUP)', shortcut: 'U' },
     { value: 'Cash Releasing/Check Releasing', label: 'Cash Releasing / Check Releasing', shortcut: 'C' },
     { value: 'Freedom of Information (FOI) Inquiries', label: 'Freedom of Information (FOI) Inquiries', shortcut: 'I' },
+    { value: "Supplemental Medical Assistance for OFW's (MedPlus)", label: "Supplemental Medical Assistance for OFW's (MedPlus)", shortcut: 'D' },
     { value: 'Others', label: 'Others', shortcut: '0' },
   ];
 
@@ -116,7 +117,8 @@ export default function FormGenerator() {
         u: serviceOptions[11].value,
         c: serviceOptions[12].value,
         i: serviceOptions[13].value,
-        0: serviceOptions[14].value,
+        d: serviceOptions[14].value,
+        0: serviceOptions[15].value,
       };
 
       if (key in serviceShortcutMap) {
@@ -179,6 +181,8 @@ export default function FormGenerator() {
   };
 
   const handleOpenForm = () => {
+    const nextCounter = counter + 1;
+
     const params = new URLSearchParams({
       emailAddress: 'region5@owwa.gov.ph',
       'entry.619699373': formDate,
@@ -212,15 +216,8 @@ export default function FormGenerator() {
     const modalElement = document.getElementById('googleFormModal');
     if (modalElement) {
       const modal = new Modal(modalElement);
-
-      modalElement.addEventListener('hidden.bs.modal', () => {
-        setCounter((prev) => {
-          const nextVal = prev + 1;
-          persistCounter(office, nextVal);
-          return nextVal;
-        });
-      }, { once: true });
-
+      setCounter(nextCounter);
+      persistCounter(office, nextCounter);
       modal.show();
     }
   };
@@ -416,7 +413,7 @@ export default function FormGenerator() {
 
           <div className="col-md-6">
             <label className="form-label fw-bold">
-              Service Availed <span className="fst-italic text-muted fw-normal fs-6">(Press 1-0 or S, E, P, L, R, U, C, I)</span>
+              Service Availed <span className="fst-italic text-muted fw-normal fs-6">(Press 1-0 or S, E, P, L, R, U, C, I, D)</span>
             </label>
             {serviceOptions.map((option) => (
               <div className="form-check" key={option.value}>
