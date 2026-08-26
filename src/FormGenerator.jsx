@@ -372,6 +372,7 @@ export default function FormGenerator() {
               />
             </div>
             <div className="col-md-8">
+              <div className="fw-bold mb-1">Selected age: {age || 0}</div>
               <input
                 type="range"
                 className="form-range"
