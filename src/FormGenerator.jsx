@@ -36,6 +36,14 @@ export default function FormGenerator() {
     { value: 'Others', label: 'Others', shortcut: '0' },
   ];
 
+  const ageOptions = [
+    { value: 18, label: '18 and below' },
+    { value: 24, label: '19-24 years old' },
+    { value: 39, label: '25-39 years old' },
+    { value: 59, label: '40-59 years old' },
+    { value: 60, label: '60 and above' },
+  ];
+
   const persistCounter = async (officeCode, value) => {
     try {
       const response = await fetch('/api/counter/save', {
@@ -152,6 +160,9 @@ export default function FormGenerator() {
     if (parsedAge <= 59) return '40-59 years old';
     return '60 and above';
   };
+
+  const selectedAgeOption = ageOptions.findIndex((option) => option.label === getAgeGroup(age));
+  const ageSliderValue = selectedAgeOption === -1 ? 0 : selectedAgeOption;
 
   const handleCounterChange = async (value) => {
     const nextValue = parseInt(value, 10) || 0;
@@ -363,25 +374,32 @@ export default function FormGenerator() {
           <div className="row">
             <div className="col-md-4">
               <input
-                type="text"
+                type="number"
                 className="form-control"
-                inputMode="numeric"
+                min="0"
+                max="120"
                 placeholder="Enter age"
                 value={age}
                 onChange={(e) => setAge(normalizeAgeValue(e.target.value))}
               />
             </div>
             <div className="col-md-8">
-              <div className="fw-bold mb-1">Selected age: {age || 0}</div>
+              <div className="fw-bold mb-1">Selected age group: {ageOptions[ageSliderValue].label}</div>
               <input
                 type="range"
                 className="form-range"
                 min="0"
-                max="120"
-                value={age || 0}
-                onChange={(e) => setAge(normalizeAgeValue(e.target.value))}
+                max={ageOptions.length - 1}
+                step="1"
+                value={ageSliderValue}
+                onChange={(e) => setAge(String(ageOptions[Number(e.target.value)].value))}
+                aria-label="Age group"
               />
-              <small className="text-muted">Slide to select age (0-120)</small>
+              <div className="d-flex justify-content-between gap-1 text-muted small">
+                {ageOptions.map((option) => (
+                  <span className="flex-fill text-center" key={option.label}>{option.label}</span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
