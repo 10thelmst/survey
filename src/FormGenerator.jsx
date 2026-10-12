@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { getCsvPrefill, parseCsv } from './csvImport';
 
 export default function FormGenerator() {
   const [prefix, setPrefix] = useState('NSO');
@@ -16,6 +17,10 @@ export default function FormGenerator() {
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [csvHeaders, setCsvHeaders] = useState([]);
+  const [csvRows, setCsvRows] = useState([]);
+  const [csvError, setCsvError] = useState('');
+  const [activeCsvRow, setActiveCsvRow] = useState(null);
 
   const serviceOptions = [
     { value: 'Scholarship- Education for Development Scholarship Program (EDSP)', label: 'Scholarship - Education for Development Scholarship Program (EDSP)', shortcut: '1' },
@@ -191,10 +196,16 @@ export default function FormGenerator() {
     setLoginError('');
   };
 
-  const handleOpenForm = () => {
+  const handleOpenForm = (csvRow = null, csvRowIndex = null) => {
     const nextCounter = counter + 1;
 
-    const params = new URLSearchParams({
+    const csvPrefill = csvRow ? getCsvPrefill(csvRow) : null;
+    if (csvPrefill?.errors.length) {
+      setCsvError(`Row ${csvRowIndex + 2}: ${csvPrefill.errors.join(' ')}`);
+      return;
+    }
+
+    const params = csvPrefill?.params || new URLSearchParams({
       emailAddress: 'region5@owwa.gov.ph',
       'entry.619699373': formDate,
       'entry.2079729964': controlNo,
@@ -227,10 +238,52 @@ export default function FormGenerator() {
     const modalElement = document.getElementById('googleFormModal');
     if (modalElement) {
       const modal = new Modal(modalElement);
-      setCounter(nextCounter);
-      persistCounter(office, nextCounter);
+      if (csvRow) {
+        setActiveCsvRow(csvRowIndex);
+      } else {
+        setActiveCsvRow(null);
+        setCounter(nextCounter);
+        persistCounter(office, nextCounter);
+      }
       modal.show();
     }
+  };
+
+  const handleCsvUpload = async (event) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file) return;
+
+    setCsvError('');
+    setCsvHeaders([]);
+    setCsvRows([]);
+    setActiveCsvRow(null);
+    try {
+      const imported = parseCsv(await file.text());
+      setCsvHeaders(imported.headers);
+      setCsvRows(imported.rows);
+    } catch (error) {
+      setCsvError(error instanceof Error ? error.message : 'Unable to read this CSV file.');
+    }
+  };
+
+  const handleCsvCellChange = (rowIndex, column, value) => {
+    setCsvRows((rows) =>
+      rows.map((row, index) => (index === rowIndex ? { ...row, [column]: value } : row))
+    );
+  };
+
+  const handleOpenCsvRow = (rowIndex) => {
+    setCsvError('');
+    handleOpenForm(csvRows[rowIndex], rowIndex);
+  };
+
+  const handleOpenNextCsvRow = () => {
+    const firstIndex = activeCsvRow === null ? 0 : activeCsvRow + 1;
+    const nextIndex = csvRows.findIndex(
+      (row, index) => index >= firstIndex && getCsvPrefill(row).errors.length === 0
+    );
+    if (nextIndex !== -1) handleOpenCsvRow(nextIndex);
   };
 
   useEffect(() => {
@@ -239,13 +292,17 @@ export default function FormGenerator() {
 
       if (isAuthenticated && isEnterShortcut) {
         event.preventDefault();
-        handleOpenForm();
+        if (activeCsvRow === null) {
+          handleOpenForm();
+        } else {
+          handleOpenForm(csvRows[activeCsvRow], activeCsvRow);
+        }
       }
     };
 
     window.addEventListener('keydown', handleOpenFormShortcut);
     return () => window.removeEventListener('keydown', handleOpenFormShortcut);
-  }, [age, controlNo, formDate, gender, handleOpenForm, isAuthenticated, office, service]);
+  }, [activeCsvRow, age, controlNo, csvRows, formDate, gender, handleOpenForm, isAuthenticated, office, service]);
 
   useEffect(() => {
     const handleEscape = (event) => {
@@ -318,6 +375,129 @@ export default function FormGenerator() {
 
       <div className="container mt-5">
         <h3 className="fw-bold mb-4" style={{ color: '#2c3e50' }}>Google Form Generator</h3>
+
+        <section className="card shadow-sm mb-4" aria-labelledby="csv-import-title">
+          <div className="card-body">
+            <h4 id="csv-import-title" className="card-title fw-bold">Import and review CSV responses</h4>
+            <p className="text-muted mb-3">
+              Upload a report, review and edit every row, then open its prefilled Google Form.
+              Forms are not submitted automatically; review and submit each response yourself.
+            </p>
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
+              <label className="btn btn-outline-primary mb-0">
+                Upload CSV
+                <input
+                  type="file"
+                  className="visually-hidden"
+                  accept=".csv,text/csv"
+                  onChange={handleCsvUpload}
+                  aria-label="Upload CSV file"
+                />
+              </label>
+              {csvRows.length > 0 ? (
+                <>
+                  <span className="text-muted">{csvRows.length} rows loaded</span>
+                  <button
+                    type="button"
+                    className="btn btn-success"
+                    onClick={handleOpenNextCsvRow}
+                    disabled={!csvRows.some(
+                      (row, index) =>
+                        index > (activeCsvRow ?? -1) && getCsvPrefill(row).errors.length === 0
+                    )}
+                  >
+                    Open next valid row
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => {
+                      setCsvHeaders([]);
+                      setCsvRows([]);
+                      setCsvError('');
+                      setActiveCsvRow(null);
+                    }}
+                  >
+                    Clear CSV
+                  </button>
+                </>
+              ) : null}
+            </div>
+            {csvError ? <div className="alert alert-danger py-2" role="alert">{csvError}</div> : null}
+
+            {csvRows.length > 0 ? (
+              <>
+                <div className="alert alert-info py-2">
+                  {activeCsvRow === null
+                    ? 'No row opened yet.'
+                    : `Last opened row ${activeCsvRow + 1} of ${csvRows.length}. After reviewing or submitting it in the form, close the form and open the next row.`}
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-sm table-bordered align-middle">
+                    <thead className="table-light">
+                      <tr>
+                        <th scope="col">Row</th>
+                        {csvHeaders.map((header) => (
+                          <th scope="col" key={header}>{header}</th>
+                        ))}
+                        <th scope="col">Prefill</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvRows.map((row, rowIndex) => {
+                        const validation = getCsvPrefill(row);
+                        return (
+                          <tr key={`csv-row-${rowIndex}`}>
+                            <th scope="row">{rowIndex + 1}</th>
+                            {csvHeaders.map((header) => (
+                              <td key={header} style={{ minWidth: header === 'comments' ? '260px' : '130px' }}>
+                                {header === 'comments' ? (
+                                  <textarea
+                                    className="form-control form-control-sm"
+                                    rows="2"
+                                    value={row[header]}
+                                    onChange={(event) =>
+                                      handleCsvCellChange(rowIndex, header, event.target.value)
+                                    }
+                                    aria-label={`Edit row ${rowIndex + 1} ${header}`}
+                                  />
+                                ) : (
+                                  <input
+                                    className="form-control form-control-sm"
+                                    value={row[header]}
+                                    onChange={(event) =>
+                                      handleCsvCellChange(rowIndex, header, event.target.value)
+                                    }
+                                    aria-label={`Edit row ${rowIndex + 1} ${header}`}
+                                  />
+                                )}
+                              </td>
+                            ))}
+                            <td style={{ minWidth: '140px' }}>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-primary"
+                                onClick={() => handleOpenCsvRow(rowIndex)}
+                                disabled={validation.errors.length > 0}
+                              >
+                                Open form
+                              </button>
+                              {validation.errors.length > 0 ? (
+                                <div className="small text-danger mt-1" role="status">
+                                  {validation.errors.join(' ')}
+                                </div>
+                              ) : null}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : null}
+          </div>
+        </section>
 
         <div className="row">
           <div className="col-md-2 mb-3">
@@ -467,7 +647,11 @@ export default function FormGenerator() {
         <div className="modal-dialog modal-xl modal-dialog-centered">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title fw-bold">Customer Satisfaction Form <span className="fw-normal text-muted fs-6">(Press Esc to close)</span></h5>
+              <h5 className="modal-title fw-bold">
+                Customer Satisfaction Form
+                {activeCsvRow !== null ? ` — CSV row ${activeCsvRow + 1}` : ''}
+                <span className="fw-normal text-muted fs-6"> (Press Esc to close)</span>
+              </h5>
               <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div className="modal-body p-0">
