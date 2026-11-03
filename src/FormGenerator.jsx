@@ -637,7 +637,10 @@ export default function FormGenerator() {
         </div>
 
         <div className="mt-4 mb-5">
-          <button className="btn btn-success btn-lg w-100 fw-semibold" onClick={handleOpenForm}>
+          <button
+            className="btn btn-success btn-lg w-100 fw-semibold"
+            onClick={() => handleOpenForm()}
+          >
             Open Google Form <span className="fw-normal">(Alt+Enter or Ctrl+Enter)</span>
           </button>
         </div>
