@@ -40,6 +40,8 @@ const SERVICE_OPTIONS = {
   elap_livelihood: 'Livelihood Support for Families for Deceased OFWs (ELAP-Livelihood Component)',
   membership_oec: 'Membership Promotion/Processing/Collection',
   wap_bereavement: 'Welfare Assistance Program (WAP)',
+  'wap-medical': 'Welfare Assistance Program (WAP)',
+  wap_medical: 'Welfare Assistance Program (WAP)',
   medplus: "Supplemental Medical Assistance for OFW's (MedPlus)",
   ease: 'Educational Assistance Through Scholarship in Emergencies (EASE)',
   pap: 'Project-Alalay sa Pag-aaral para sa mga Anak-OFWs sa Panahon ng Pandemya (PAP)',

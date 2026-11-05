@@ -480,7 +480,7 @@ export default function FormGenerator() {
                                 onClick={() => handleOpenCsvRow(rowIndex)}
                                 disabled={validation.errors.length > 0}
                               >
-                                Open form
+                                Open Form {rowIndex + 1}
                               </button>
                               {validation.errors.length > 0 ? (
                                 <div className="small text-danger mt-1" role="status">
